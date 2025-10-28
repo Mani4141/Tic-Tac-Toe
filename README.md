@@ -33,3 +33,15 @@ I also added a small condition in `actionForEmptyHolder()`:
 if (checkForWinner() != nullptr || checkForDraw())
     return false;
 so that when the game ends you cannot continue placing pieces.
+
+AI Implementation
+
+The AI (Player 2 / O) uses Negamax, a compact variant of Minimax. It searches the full tic-tac-toe game tree to terminal states (win/loss/draw) and chooses the move with the best outcome from the AI’s perspective.
+
+**Key points:**
+- On each turn, the AI tries every legal move, recursively evaluates the reply, and keeps the maximum score using negation (`score = −childScore`).
+- Terminal scores: AI win = `10 − depth`, Human win = `depth − 10`, Draw = `0`. This prefers faster wins and slower losses.
+- Win checks and board fullness operate on the virtual board string (no engine mutation during search).
+- After choosing the best move, the AI places it through the existing `actionForEmptyHolder(...)` so all rules and visuals remain consistent.
+
+This implementation doesn’t use alpha-beta pruning (not required), since tic-tac-toe’s search space is small enough to evaluate fully each turn.

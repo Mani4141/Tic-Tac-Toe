@@ -93,11 +93,11 @@ void Game::endTurn()
 
 void Game::scanForMouse()
 {
-    //if (gameHasAI() && getCurrentPlayer()->isAIPlayer()) 
-    //{
-    //    updateAI();
-    //    return;
-    //}
+    if (gameHasAI() && getCurrentPlayer()->isAIPlayer()) 
+    {
+        updateAI();
+        return;
+	}
 
     ImVec2 mousePos = ImGui::GetMousePos();
     mousePos.x -= ImGui::GetWindowPos().x;
@@ -167,6 +167,8 @@ bool Game::animateAndPlaceBitFromTo(Bit *bit, BitHolder*src, BitHolder*dst)
 
 bool Game::gameHasAI()
 {
+    for (auto* p : _players)
+        if (p && p->isAIPlayer()) return true;
     return false;
 }
 

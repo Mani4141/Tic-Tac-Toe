@@ -61,6 +61,7 @@ void TicTacToe::setUpBoard()
 
     // 1) Configure game
     setNumberOfPlayers(2);
+    setAIPlayer(AI_PLAYER);
     _gameOptions.rowX = 3;
     _gameOptions.rowY = 3;
 
@@ -316,7 +317,64 @@ void TicTacToe::setStateString(const std::string &s)
 //
 // this is the function that will be called by the AI
 //
-void TicTacToe::updateAI() 
+void TicTacToe::updateAI()
 {
-    // we will implement the AI in the next assignment!
+    // Only act if game is ongoing and it's AI's turn (player 1 = O)
+    if (checkForWinner() != nullptr || checkForDraw()) return;
+    if (!getCurrentPlayer() || getCurrentPlayer()->playerNumber() != AI_PLAYER) return;
+
+    std::string b = stateString(); // '0' empty, '1' = X, '2' = O
+
+    // Local win lines (no global changes)
+    static const int W[8][3] = {
+        {0,1,2},{3,4,5},{6,7,8},
+        {0,3,6},{1,4,7},{2,5,8},
+        {0,4,8},{2,4,6}
+    };
+
+    auto win = [&](char p) {
+        for (const auto& L : W)
+            if (b[L[0]] == p && b[L[1]] == p && b[L[2]] == p) return true;
+        return false;
+    };
+    auto full = [&]{ return b.find('0') == std::string::npos; };
+
+    // Negamax (no alpha-beta needed for 3x3)
+    // +10 − depth = quick AI win,  −10 + depth = slow loss, 0 = draw
+    // Try every empty square for the current player (p),
+    auto negamax = [&](auto&& self, char p, int depth) -> int {
+        char opp = (p == '2') ? '1' : '2';
+
+        // Base cases from *p's* perspective
+        if (win(p))   return 10 - depth;  // current player wins → good for p
+        if (win(opp)) return depth - 10;  // opponent wins       → bad for p
+        if (full())   return 0;           // draw
+
+        int best = -1000;
+
+        // Try all moves for current player p
+        for (int i = 0; i < 9; ++i) {
+            if (b[i] != '0') continue;
+            b[i] = p;
+            // Switch perspective to opponent, then negate back
+            int score = -self(self, opp, depth + 1);
+            b[i] = '0';
+            if (score > best) best = score;
+        }
+        return best;
+    };
+
+    // Try all legal AI moves, pick the best
+    int bestScore = -1000, bestIdx = -1;
+    for (int i = 0; i < 9; ++i) {
+        if (b[i] != '0') continue;
+        b[i] = '2'; // AI tries here
+        int score = -negamax(negamax, '1', 1); // then human
+        b[i] = '0';
+        if (score > bestScore) { bestScore = score; bestIdx = i; }
+    }
+
+    if (bestIdx >= 0)
+        actionForEmptyHolder(&_grid[bestIdx / 3][bestIdx % 3]);
+        endTurn();
 }
